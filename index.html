@@ -742,6 +742,50 @@ function renderDash(){
 }
 
 // ── INIT ──
+  <script>
+
+// 🔥 Google Sheet thi product load karvu
+async function loadProductsFromSheet() {
+  try {
+    const res = await fetch("https://sheetdb.io/api/v1/tt8u2yqusl5jo");
+    const data = await res.json();
+
+    const formatted = data.map(p => ({
+      id: p.ProductID,
+      name: p.ProductName,
+      price: Number(p.Price || 0),
+      stock: Number(p.Stock || 0)
+    }));
+
+    // 🔥 Replace existing products
+    S.set('vp', formatted);
+
+    console.log("✅ Sheet Products Loaded:", formatted);
+
+    // UI refresh (important)
+    if (currentScreen === 'products') renderProds();
+
+  } catch (err) {
+    console.error("❌ Sheet load error:", err);
+    toast("Sheet load failed","error");
+  }
+}
+
+</script>
+  (function init(){
+  loadProductsFromSheet(); // 🔥 ADD THIS LINE
+
+  updateCustBar();
+  updateCartBadge();
+  renderCartStrip();
+
+  document.getElementById('cust-modal').addEventListener('click',function(e){
+    if(e.target===this)this.classList.add('hidden');
+  });
+
+  const c=S.get('vc',null);
+  if(!c||!c.name)setTimeout(openCustModal,700);
+})();
 (function init(){
   updateCustBar();updateCartBadge();renderCartStrip();
   document.getElementById('cust-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
@@ -749,5 +793,51 @@ function renderDash(){
   if(!c||!c.name)setTimeout(openCustModal,700);
 })();
 </script>
+// 🔥 Load data from Google Sheet
+async function loadProducts() {
+  const res = await fetch("https://sheetdb.io/api/v1/tt8u2yqusl5jo");
+  const data = await res.json();
+
+  data.forEach(p => {
+    products[p.ProductID] = p;
+  });
+
+  console.log("Products Loaded:", products);
+}
+
+// page load thay tyare
+loadProducts();
+
+// 🛒 Add to cart
+function addToCart(productId) {
+  if (!products[productId]) {
+    alert("Product not found");
+    return;
+  }
+
+  if (cart[productId]) {
+    cart[productId].qty++;
+  } else {
+    cart[productId] = {
+      name: products[productId].ProductName,
+      qty: 1
+    };
+  }
+
+  renderCart();
+}
+
+// 📦 Show cart
+function renderCart() {
+  let output = "";
+
+  for (let id in cart) {
+    output += `<p>${cart[id].name} – ${cart[id].qty}</p>`;
+  }
+
+  document.getElementById("cart").innerHTML = output;
+}
+
+</script>      
 </body>
 </html>
